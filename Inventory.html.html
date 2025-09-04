@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Inventory System</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #f0f0f0; }
+    input, button { margin: 5px; padding: 6px; }
+  </style>
+</head>
+<body>
+  <h2>📦 ระบบจัดการ INVENTORY</h2>
+
+  <form id="addForm">
+    <input type="text" id="name" placeholder="ชื่อสินค้า" required>
+    <input type="number" id="price" placeholder="ราคา" required>
+    <input type="number" id="qty" placeholder="จำนวน" required>
+    <button type="submit">➕ เพิ่มสินค้า</button>
+  </form>
+
+  <table id="inventoryTable">
+    <thead>
+      <tr>
+        <th>ลำดับ</th>
+        <th>ชื่อ</th>
+        <th>ราคา</th>
+        <th>จำนวน</th>
+        <th>วันที่บันทึก</th>
+        <th>แก้ไข</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+<script>
+const scriptURL = "PASTE_YOUR_SCRIPT_URL_HERE"; // แปะ URL จาก Apps Script
+
+// โหลดข้อมูล
+async function loadData() {
+  let res = await fetch(scriptURL + "?action=getItems");
+  let data = await res.json();
+  let tbody = document.querySelector("#inventoryTable tbody");
+  tbody.innerHTML = "";
+  data.forEach(row => {
+    let tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${row[0]}</td>
+      <td>${row[1]}</td>
+      <td>${row[2]}</td>
+      <td>${row[3]}</td>
+      <td>${row[4]}</td>
+      <td><button onclick="editItem(${row[0]}, '${row[1]}', ${row[2]}, ${row[3]})">แก้ไข</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// เพิ่มสินค้า
+document.getElementById("addForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  let item = {
+    name: document.getElementById("name").value,
+    price: document.getElementById("price").value,
+    qty: document.getElementById("qty").value
+  };
+  await fetch(scriptURL, {
+    method: "POST",
+    body: JSON.stringify({ action: "addItem", item: item })
+  });
+  loadData();
+  e.target.reset();
+});
+
+// แก้ไขสินค้า
+async function editItem(id, name, price, qty) {
+  let newName = prompt("ชื่อสินค้าใหม่:", name);
+  let newPrice = prompt("ราคาใหม่:", price);
+  let newQty = prompt("จำนวนใหม่:", qty);
+  if (!newName || !newPrice || !newQty) return;
+
+  let item = { name: newName, price: newPrice, qty: newQty };
+  await fetch(scriptURL, {
+    method: "POST",
+    body: JSON.stringify({ action: "editItem", id: id, item: item })
+  });
+  loadData();
+}
+
+// โหลดข้อมูลครั้งแรก
+loadData();
+</script>
+</body>
+</html>
